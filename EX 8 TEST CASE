@@ -1,0 +1,42 @@
+import numpy as np
+from scipy import stats
+
+# Very small samples
+x = np.array([3, 4, 5])
+y = np.array([1, 2, 3])
+
+N = len(x)
+
+# Sample variances
+var_x = x.var(ddof=1)
+var_y = y.var(ddof=1)
+
+# Pooled standard deviation
+SD = np.sqrt((var_x + var_y) / 2)
+
+print("Standard Deviation =", SD)
+
+# Manual t-statistic
+tval = (x.mean() - y.mean()) / (SD * np.sqrt(2 / N))
+
+# Degrees of freedom
+dof = 2 * N - 2
+
+# Two-tailed p-value
+pval = 2 * (1 - stats.t.cdf(abs(tval), df=dof))
+
+print("Manual t =", tval)
+print("Manual p =", pval)
+
+# SciPy verification
+tval2, pval2 = stats.ttest_ind(x, y, equal_var=True)
+
+print("SciPy t =", tval2)
+print("SciPy p =", pval2)
+
+OUTPUT:
+Standard Deviation = 1.0
+Manual t = 2.449489742783178
+Manual p = 0.07048399691022
+SciPy t = 2.449489742783178
+SciPy p = 0.07048399691021993

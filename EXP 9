@@ -1,0 +1,133 @@
+#exp 8 
+# ================================
+# STEP 1: Import Libraries
+# ================================
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import warnings
+warnings.filterwarnings('ignore')
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler, PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import cross_val_score, KFold
+
+# ================================
+# STEP 2: Upload Dataset
+# ================================
+from google.colab import files
+uploaded = files.upload()
+
+# ================================
+# STEP 3: Load Dataset
+# ================================
+housing = pd.read_csv('housing.csv', header=None)
+
+# Give proper column names
+housing.columns = [
+'CRIM','ZN','INDUS','CHAS','NOX','RM','AGE','DIS',
+'RAD','TAX','PTRATIO','B','LSTAT','PRICE'
+]
+
+print("Dataset Preview")
+print(housing.head())
+
+# ================================
+# STEP 4: Select RM vs PRICE
+# ================================
+df = housing[['RM','PRICE']]
+
+# ================================
+# STEP 5: Scaling
+# ================================
+scaler = MinMaxScaler()
+df_scaled = scaler.fit_transform(df)
+
+df = pd.DataFrame(df_scaled, columns=['RM','PRICE'])
+
+# ================================
+# STEP 6: Visualization
+# ================================
+plt.figure(figsize=(6,4))
+sns.regplot(x='RM', y='PRICE', data=df, fit_reg=False)
+plt.title("Rooms vs Price")
+plt.show()
+
+# ================================
+# STEP 7: Train Test Split
+# ================================
+train, test = train_test_split(df, train_size=0.7, random_state=10)
+
+X_train = train[['RM']].values
+y_train = train['PRICE'].values
+
+X_test = test[['RM']].values
+y_test = test['PRICE'].values
+
+# ================================
+# STEP 8: Polynomial Regression
+# ================================
+degrees = [1,2,3,4,5]
+cv_scores = []
+
+for d in degrees:
+
+    model = make_pipeline(
+        PolynomialFeatures(d),
+        LinearRegression()
+    )
+
+    kfold = KFold(n_splits=5, shuffle=True, random_state=10)
+
+    scores = cross_val_score(
+        model,
+        X_train,
+        y_train,
+        scoring='neg_mean_squared_error',
+        cv=kfold
+    )
+
+    rmse = np.sqrt(-scores.mean())
+    cv_scores.append(rmse)
+
+    print("Degree", d, "RMSE:", rmse)
+
+# ================================
+# STEP 9: Plot Error
+# ================================
+plt.plot(degrees, cv_scores, marker='o')
+plt.xlabel("Polynomial Degree")
+plt.ylabel("RMSE")
+plt.title("Degree vs Error")
+plt.show()
+
+# ================================
+# STEP 10: Best Degree
+# ================================
+best_degree = degrees[np.argmin(cv_scores)]
+print("Best Polynomial Degree:", best_degree)
+
+# ================================
+# STEP 11: Train Final Model
+# ================================
+final_model = make_pipeline(
+    PolynomialFeatures(best_degree),
+    LinearRegression()
+)
+
+final_model.fit(X_train, y_train)
+
+# ================================
+# STEP 12: Prediction
+# ================================
+y_pred = final_model.predict(X_test)
+
+plt.scatter(X_test, y_test, label="Actual")
+plt.scatter(X_test, y_pred, color='red', label="Predicted")
+plt.xlabel("Rooms")
+plt.ylabel("Price")
+plt.legend()
+plt.show()

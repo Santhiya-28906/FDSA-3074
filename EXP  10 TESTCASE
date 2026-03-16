@@ -1,0 +1,43 @@
+#EXP 10 TESTCASE
+# Import libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+
+# Small sample dataset
+data = {
+    "area":[500,700,900,1100,1300],
+    "price":[150,200,250,300,360]
+}
+
+df = pd.DataFrame(data)
+
+print("Dataset:")
+print(df)
+
+# X and y
+X = df[['area']]
+y = df['price']
+
+# Polynomial model (degree 2)
+poly = PolynomialFeatures(degree=2)
+X_poly = poly.fit_transform(X)
+
+model = LinearRegression()
+model.fit(X_poly, y)
+
+# Prediction
+pred = model.predict(X_poly)
+
+print("\nPredicted Prices:")
+print(pred)
+
+# Plot
+plt.scatter(X, y, color='blue', label="Actual")
+plt.plot(X, pred, color='red', label="Polynomial Fit")
+plt.xlabel("Area")
+plt.ylabel("Price")
+plt.legend()
+plt.show()
